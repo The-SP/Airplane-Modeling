@@ -1,5 +1,10 @@
 #include "olcConsoleGameEngine.h"
 
+#include<fstream>
+#include<strstream>
+#include<algorithm>
+
+
 // Represent coordinates in 3D space
 struct vec3d
 {
@@ -19,6 +24,44 @@ struct triangle
 struct mesh
 {
 	std::vector<triangle> tris;
+
+	bool LoadFromObjectFile(std::string filename)
+	{
+		std::ifstream file(filename);
+		if (!file.is_open())
+			return false;
+
+		// Local cache of vertices
+		std::vector<vec3d> vertices;
+
+		while (!file.eof())
+		{
+			// Assuming any line of the file doesn't exceed 128 characters
+			char line[128];
+			file.getline(line, 128);
+
+			std::strstream stream;
+			stream << line;
+
+			// Each line starts with a character that describes what the line is eg: v, f
+			char startingJunkChar;
+
+			if (line[0] == 'v')
+			{
+				vec3d vertex;
+				stream >> startingJunkChar >> vertex.x >> vertex.y >> vertex.z;
+				vertices.push_back(vertex);
+			}
+
+			if (line[0] == 'f')
+			{
+				int f[3]; // face
+				stream >> startingJunkChar >> f[0] >> f[1] >> f[2];
+				tris.push_back({ vertices[f[0] - 1], vertices[f[1] - 1], vertices[f[2] - 1] });
+			}
+		}
+		return true;
+	}
 };
 
 // 4x4 matrix
@@ -93,34 +136,12 @@ public:
 
 	bool OnUserCreate() override
 	{
-		// Populate mesh with vertecies data to define cube made of triangles
-		meshCube.tris = {
-
-			// SOUTH
-			{ 0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-			// EAST                                                      
-			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
-			{ 1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
-
-			// NORTH                                                     
-			{ 1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
-			{ 1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
-
-			// WEST                                                      
-			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
-
-			// TOP                                                       
-			{ 0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
-
-			// BOTTOM                                                    
-			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
-			{ 1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-		};
+		// Populate mesh with vertecies data from object file
+		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/teapot.obj");
+		if (!isObjectLoaded) {
+			std::cout << "Couldn't load object";
+			return 0; // Terminate program
+		}
 
 		// Projection Matrix
 		float fNear = 0.1f;		// Near plane
@@ -167,6 +188,9 @@ public:
 		matRotX.m[3][3] = 1;
 
 
+		// Store triangles for rasterizing later
+		std::vector<triangle> vecTrianglesToRaster;
+
 		// Draw Triangles
 		for (auto tri : meshCube.tris) 
 		{
@@ -182,13 +206,13 @@ public:
 			MultiplyMatrixVector(triRotatedZ.p[1], triRotatedZX.p[1], matRotX);
 			MultiplyMatrixVector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
 
-			// Offset into the screen
-			// Translate triangle away from the camera
+			// Offset into the screen: Translate triangle away from the camera
 			triTranslated = triRotatedZX;
-			triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
-			triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
-			triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+			triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
+			triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
+			triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
 
+			// Use Cross-Product to get surface normal
 			vec3d normal, line1, line2;
 			line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
 			line1.y = triTranslated.p[1].y - triTranslated.p[0].y;
@@ -225,7 +249,7 @@ public:
 				// Normalize light_direction
 				float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
 				light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
-				// Dot product
+				// Dot product: To see how similar is normal to light direction
 				float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
 
 				// Set colour and symbol value of translated triangle
@@ -254,18 +278,36 @@ public:
 					triProjected.p[i].y *= 0.5f * (float)ScreenHeight();
 				}
 
-				// Rasterize Triangle
-				FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
-					triProjected.p[1].x, triProjected.p[1].y,
-					triProjected.p[2].x, triProjected.p[2].y,
-					triProjected.sym, triProjected.col);
-
-				// Wireframe Triangle (Outline for debugging)
-				 DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-					triProjected.p[1].x, triProjected.p[1].y,
-					triProjected.p[2].x, triProjected.p[2].y,
-					PIXEL_SOLID, FG_BLUE);  
+				// Store triangles for sorting
+				vecTrianglesToRaster.push_back(triProjected);
 			}
+		}
+
+		// Sort triangles from back to front
+		sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2)
+		{
+			// Get mid-point value of z-components
+			float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+			float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+			// Draw triangles that are far first, so the triangles at front are drawn clearly
+			return z1 > z2;
+		});
+
+		for (auto& triProjected : vecTrianglesToRaster)
+		{
+			// Rasterize Triangle
+			FillTriangle(
+				triProjected.p[0].x, triProjected.p[0].y,
+				triProjected.p[1].x, triProjected.p[1].y,
+				triProjected.p[2].x, triProjected.p[2].y,
+				triProjected.sym, triProjected.col);
+
+			// Wireframe Triangle (Outline for debugging)
+			/* DrawTriangle(
+				triProjected.p[0].x, triProjected.p[0].y,
+				triProjected.p[1].x, triProjected.p[1].y,
+				triProjected.p[2].x, triProjected.p[2].y,
+				PIXEL_SOLID, FG_BLACK); */
 		}
 
 		return true;
