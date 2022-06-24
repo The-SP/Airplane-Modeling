@@ -30,6 +30,8 @@ private:
 	mesh meshCube;
 	mat4x4 matProj;
 
+	vec3d vCamera;
+
 	float fTheta;
 
 	void MultiplyMatrixVector(vec3d& i, vec3d& o, mat4x4& m) {
@@ -148,28 +150,51 @@ public:
 			triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
 			triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
 
-			// Project triangles form 3D --> 2D
-			MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-			MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
-			MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+			vec3d normal, line1, line2;
+			line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
+			line1.y = triTranslated.p[1].y - triTranslated.p[0].y;
+			line1.z = triTranslated.p[1].z - triTranslated.p[0].z;
 
-			// Scale into view
-			// Projection matrix gives result triProjected betn -1 to +1 (normalized) so scale it to viewing area of the console screen
-			for (int i = 0; i <= 2; i++) {
-				// First change values between -1 to +1 to between 0 to +2 (positive)
-				triProjected.p[i].x += 1.0f;
-				triProjected.p[i].y += 1.0f;
-				// Divide by 2 and scale it to the appropriate size of the axis using screen width and height
-				triProjected.p[i].x *= 0.5f * (float)ScreenWidth();
-				triProjected.p[i].y *= 0.5f * (float)ScreenHeight();
+			line2.x = triTranslated.p[2].x - triTranslated.p[0].x;
+			line2.y = triTranslated.p[2].y - triTranslated.p[0].y;
+			line2.z = triTranslated.p[2].z - triTranslated.p[0].z;
+
+			normal.x = line1.y * line2.z - line1.z * line2.y;
+			normal.y = line1.z* line2.x - line1.x * line2.z;
+			normal.z = line1.x * line2.y - line1.y * line2.x;
+
+			float l = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+			normal.x /= l; normal.y /= l; normal.z /= l;
+
+			float dotProduct =	
+				normal.x * (triTranslated.p[0].x - vCamera.x) +
+				normal.y * (triTranslated.p[0].y - vCamera.y) +
+				normal.z * (triTranslated.p[0].z - vCamera.z);
+
+			if (dotProduct > 0)
+			{
+				// Project triangles form 3D --> 2D
+				MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
+				MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
+				MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+
+				// Scale into view
+				// Projection matrix gives result triProjected betn -1 to +1 (normalized) so scale it to viewing area of the console screen
+				for (int i = 0; i <= 2; i++) {
+					// First change values between -1 to +1 to between 0 to +2 (positive)
+					triProjected.p[i].x += 1.0f;
+					triProjected.p[i].y += 1.0f;
+					// Divide by 2 and scale it to the appropriate size of the axis using screen width and height
+					triProjected.p[i].x *= 0.5f * (float)ScreenWidth();
+					triProjected.p[i].y *= 0.5f * (float)ScreenHeight();
+				}
+
+				// Rasterize Triangle
+				DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
+					triProjected.p[1].x, triProjected.p[1].y,
+					triProjected.p[2].x, triProjected.p[2].y,
+					PIXEL_SOLID, FG_WHITE);
 			}
-
-			// Rasterize Triangle
-			DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-				triProjected.p[1].x, triProjected.p[1].y,
-				triProjected.p[2].x, triProjected.p[2].y,
-				PIXEL_SOLID, FG_WHITE);
-
 		}
 
 		return true;
