@@ -137,7 +137,7 @@ public:
 	bool OnUserCreate() override
 	{
 		// Populate mesh with vertecies data from object file
-		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/teapot.obj");
+		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/low_plane.obj");
 		if (!isObjectLoaded) {
 			std::cout << "Couldn't load object";
 			return 0; // Terminate program
@@ -208,9 +208,9 @@ public:
 
 			// Offset into the screen: Translate triangle away from the camera
 			triTranslated = triRotatedZX;
-			triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
-			triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
-			triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
+			triTranslated.p[0].z = triRotatedZX.p[0].z + 0.9f;
+			triTranslated.p[1].z = triRotatedZX.p[1].z + 0.9f;
+			triTranslated.p[2].z = triRotatedZX.p[2].z + 0.9f;
 
 			// Use Cross-Product to get surface normal
 			vec3d normal, line1, line2;
