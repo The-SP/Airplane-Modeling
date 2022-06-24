@@ -33,6 +33,7 @@ private:
 	mesh meshCube;
 	mat4x4 matProj;
 
+	// Represent position of camera in 3D space
 	vec3d vCamera;
 
 	float fTheta;
@@ -49,6 +50,7 @@ private:
 		}
 	}
 
+	// Takes luminance value between 0 & 1 and returns the symbol and console color combinations
 	CHAR_INFO GetColour(float lum)
 	{
 		short bg_col, fg_col;
@@ -196,27 +198,37 @@ public:
 			line2.y = triTranslated.p[2].y - triTranslated.p[0].y;
 			line2.z = triTranslated.p[2].z - triTranslated.p[0].z;
 
+			// Normal = Cross product of two lines
+			// Nx = Ay.Bz - Az.By, Ny = Az.Bx - Ax.Bz, Nz = Ax.By - Ay.Bx
 			normal.x = line1.y * line2.z - line1.z * line2.y;
 			normal.y = line1.z* line2.x - line1.x * line2.z;
 			normal.z = line1.x * line2.y - line1.y * line2.x;
 
+			// Normalize the normal i.e make unit vector
 			float l = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
 			normal.x /= l; normal.y /= l; normal.z /= l;
 
+			// Dot product is used to determine the similarity of two vector
+			// Dot product between line from camera to the triangle (to one of its point) and the normal
 			float dotProduct =	
 				normal.x * (triTranslated.p[0].x - vCamera.x) +
 				normal.y * (triTranslated.p[0].y - vCamera.y) +
 				normal.z * (triTranslated.p[0].z - vCamera.z);
 
+			// Check dotProduct to see what faces of cube are visible
 			if (dotProduct < 0)
 			{
-				// Illuminatin
-				vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+				// Illumination
+				// This is the simplest form of lighting. It's a single direction light (this doesn't exist in real world)
+				// This light assumes that all rays of light are coming in from a single direction not a single point
+				vec3d light_direction = { 0.0f, 0.0f, -1.0f };	// only z-component to indicate the light is shining towards the player
+				// Normalize light_direction
 				float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
 				light_direction.x /= l; light_direction.y /= l; light_direction.z /= l;
 				// Dot product
 				float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
 
+				// Set colour and symbol value of translated triangle
 				CHAR_INFO c = GetColour(dp);
 				triTranslated.col = c.Attributes;
 				triTranslated.sym = c.Char.UnicodeChar;
@@ -226,6 +238,7 @@ public:
 				MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
 				MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
 				MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
+				// Copy color and symbol values of translated triangle to projected triangle
 				triProjected.col = triTranslated.col;
 				triProjected.sym = triTranslated.sym;
 
@@ -247,10 +260,11 @@ public:
 					triProjected.p[2].x, triProjected.p[2].y,
 					triProjected.sym, triProjected.col);
 
+				// Wireframe Triangle (Outline for debugging)
 				 DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
 					triProjected.p[1].x, triProjected.p[1].y,
 					triProjected.p[2].x, triProjected.p[2].y,
-					PIXEL_SOLID, FG_BLUE); 
+					PIXEL_SOLID, FG_BLUE);  
 			}
 		}
 
