@@ -13,7 +13,8 @@ private:
 	mat4x4 matProj;	// Matrix that converts from view space to screen space
 	
 	vec3d vCamera;	// Location of camera in world space
-
+	vec3d vLookDir; // Direction vector along the direction camera points
+	float fYaw;		// FPS Camera rotation in XZ plane
 	float fTheta;	// Spins World Transform
 
 
@@ -61,7 +62,7 @@ public:
 	bool OnUserCreate() override
 	{
 		// Populate mesh with vertecies data from object file
-		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/low_plane.obj");
+		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/mountains.obj");
 		if (!isObjectLoaded) {
 			std::cout << "Couldn't load object";
 			return 0; // Terminate program
@@ -76,31 +77,72 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		if (GetKey(VK_UP).bHeld)
+			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
+
+		if (GetKey(VK_DOWN).bHeld)
+			vCamera.y -= 8.0f * fElapsedTime;	// Travel Downwards
+
+
+		// Dont use these two in FPS mode, it is confusing :P
+		if (GetKey(VK_LEFT).bHeld)
+			vCamera.x -= 8.0f * fElapsedTime;	// Travel Along X-Axis
+
+		if (GetKey(VK_RIGHT).bHeld)
+			vCamera.x += 8.0f * fElapsedTime;	// Travel Along X-Axis
+		///////
+
+
+		vec3d vForward = Vector_Mul(vLookDir, 8.0f * fElapsedTime);
+
+		// Standard FPS Control scheme, but turn instead of strafe
+		if (GetKey(L'W').bHeld)
+			vCamera = Vector_Add(vCamera, vForward);
+
+		if (GetKey(L'S').bHeld)
+			vCamera = Vector_Sub(vCamera, vForward);
+
+		if (GetKey(L'A').bHeld)
+			fYaw -= 2.0f * fElapsedTime;
+
+		if (GetKey(L'D').bHeld)
+			fYaw += 2.0f * fElapsedTime;
+
+
+
 		// Set up "World Transform" though not updating theta makes this a bit redundant
 		// Matrices to perform rotation transform around the axes
 		mat4x4 matRotZ, matRotX;
 		// To give impression that something is rotating, define angle value that changes over time
-		fTheta += 1.0f * fElapsedTime;	// Uncomment to spin round and round
+		//fTheta += 1.0f * fElapsedTime;	// Uncomment to spin round and round
 
-		// Rotation Z
-		matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);
-		// Rotation X
-		matRotX = Matrix_MakeRotationX(fTheta);
+		matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);	// Rotation Z
+		matRotX = Matrix_MakeRotationX(fTheta);			// Rotation X
 
-		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 0.7f);	// Change z-value to draw the object near or far
+		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 5.0f);	// Change z-value to draw the object near or far
 
 		mat4x4 matWorld;	// Create Composite Transformation Matrix
 		matWorld = Matrix_MakeIdentity();	// Form world matrix
 		matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);	// Transform by rotation
 		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
 
+		// Create "Point At" Matrix for camera
+		vec3d vUp = { 0, 1, 0 };
+		vec3d vTarget = { 0, 0, 1 };
+		mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+		vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
+		vTarget = Vector_Add(vCamera, vLookDir);
+		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
+
+		// Make view matrix from camera
+		mat4x4 matView = Matrix_QuickInverse(matCamera);
 
 		// Store triangles for rasterizing later
 		std::vector<triangle> vecTrianglesToRaster;
 
 		for (auto tri : meshCube.tris)
 		{
-			triangle triProjected, triTransformed;
+			triangle triProjected, triTransformed, triViewed;
 
 			// Transform each triangle using World Matrix (ie Composite Transformation Matrix)
 			triTransformed.p[0] = Matrix_MultiplyVector(matWorld, tri.p[0]);
@@ -132,7 +174,7 @@ public:
 				// Illumination
 				// This is the simplest form of lighting. It's a single direction light (this doesn't exist in real world)
 				// This light assumes that all rays of light are coming in from a single direction not a single point
-				vec3d light_direction = { 0.0f, 0.0f, -1.0f };	// only z-component to indicate the light is shining towards the player
+				vec3d light_direction = { 0.0f, 1.0f, -1.0f };	// only z-component to indicate the light is shining towards the player
 				// Normalize light_direction
 				light_direction = Vector_Normalise(light_direction);
 				// Dot product: How "aligned" are light direction and triangle surface normal ?
@@ -144,32 +186,58 @@ public:
 				triTransformed.sym = c.Char.UnicodeChar;
 
 
-				// Project triangles form 3D --> 2D
-				triProjected.p[0] = Matrix_MultiplyVector(matProj, triTransformed.p[0]);
-				triProjected.p[1] = Matrix_MultiplyVector(matProj, triTransformed.p[1]);
-				triProjected.p[2] = Matrix_MultiplyVector(matProj, triTransformed.p[2]);
+				// Convert World Space --> View Space
+				triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
+				triViewed.p[1] = Matrix_MultiplyVector(matView, triTransformed.p[1]);
+				triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
 				// Copy color and symbol values of transformed triangle to projected triangle
-				triProjected.col = triTransformed.col;
-				triProjected.sym = triTransformed.sym;
-				// Normalize the coordinates
-				triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
-				triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
-				triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+				triViewed.col = triTransformed.col;
+				triViewed.sym = triTransformed.sym;
 
+				// Clip Viewed Triangle against near plane, this could form two additional triangles.
+				int nClippedTriangles = 0;
+				triangle clipped[2];
+				nClippedTriangles = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.1f }, { 0.0f, 0.0f, 1.0f }, triViewed, clipped[0], clipped[1]);
 
-				// Scale into view: Offset vertices into visible normalised space
-				// Projection matrix gives result triProjected betn -1 to +1 (normalized) so scale it to viewing area of the console screen
-				vec3d vOffsetView = { 1, 1, 0 };
-				for (int i = 0; i <= 2; i++) {
-					// First change values between -1 to +1 to between 0 to +2 (positive)
-					triProjected.p[i] = Vector_Add(triProjected.p[i], vOffsetView);
-					// Divide by 2 and scale it to the appropriate size of the axis using screen width and height
-					triProjected.p[i].x *= 0.5f * (float)ScreenWidth();
-					triProjected.p[i].y *= 0.5f * (float)ScreenHeight();
+				// We may end up with multiple triangles form the clip, so project as required
+				for (int n = 0; n < nClippedTriangles; n++)
+				{
+					// Project triangles from 3D --> 2D
+					triProjected.p[0] = Matrix_MultiplyVector(matProj, clipped[n].p[0]);
+					triProjected.p[1] = Matrix_MultiplyVector(matProj, clipped[n].p[1]);
+					triProjected.p[2] = Matrix_MultiplyVector(matProj, clipped[n].p[2]);
+					triProjected.col = clipped[n].col;
+					triProjected.sym = clipped[n].sym;
+
+					// Scale into view, we moved the normalising into cartesian space
+					// out of the matrix.vector function from the previous videos, so
+					// do this manually
+					triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
+					triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
+					triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+
+					// X/Y are inverted so put them back
+					triProjected.p[0].x *= -1.0f;
+					triProjected.p[1].x *= -1.0f;
+					triProjected.p[2].x *= -1.0f;
+					triProjected.p[0].y *= -1.0f;
+					triProjected.p[1].y *= -1.0f;
+					triProjected.p[2].y *= -1.0f;
+
+					// Scale into view: Offset vertices into visible normalised space
+					// Projection matrix gives result triProjected betn -1 to +1 (normalized) so scale it to viewing area of the console screen
+					vec3d vOffsetView = { 1, 1, 0 };
+					for (int i = 0; i <= 2; i++) {
+						// First change values between -1 to +1 to between 0 to +2 (positive)
+						triProjected.p[i] = Vector_Add(triProjected.p[i], vOffsetView);
+						// Divide by 2 and scale it to the appropriate size of the axis using screen width and height
+						triProjected.p[i].x *= 0.5f * (float)ScreenWidth();
+						triProjected.p[i].y *= 0.5f * (float)ScreenHeight();
+					}
+
+					// Store triangles for sorting
+					vecTrianglesToRaster.push_back(triProjected);
 				}
-
-				// Store triangles for sorting
-				vecTrianglesToRaster.push_back(triProjected);
 			}
 		}
 
@@ -186,22 +254,67 @@ public:
 		// Clear the screen
 		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
-		// Draw the triangles
-		for (auto& triProjected : vecTrianglesToRaster)
+		// Loop through all transformed, viewed, projected, and sorted triangles
+		for (auto& triToRaster : vecTrianglesToRaster)
 		{
-			// Rasterize Triangle
-			FillTriangle(
-				triProjected.p[0].x, triProjected.p[0].y,
-				triProjected.p[1].x, triProjected.p[1].y,
-				triProjected.p[2].x, triProjected.p[2].y,
-				triProjected.sym, triProjected.col);
+			// Clip triangles against all four screen edges, this could yield
+			// a bunch of triangles, so create a queue that we traverse to 
+			//  ensure we only test new triangles generated against planes
+			triangle clipped[2];
+			std::list<triangle> listTriangles;
 
-			// Wireframe Triangle (Outline for debugging)
-			/* DrawTriangle(
-				triProjected.p[0].x, triProjected.p[0].y,
-				triProjected.p[1].x, triProjected.p[1].y,
-				triProjected.p[2].x, triProjected.p[2].y,
-				PIXEL_SOLID, FG_BLACK); */
+			// Add initial triangle
+			listTriangles.push_back(triToRaster);
+			int nNewTriangles = 1;
+
+			for (int p = 0; p < 4; p++)
+			{
+				int nTrisToAdd = 0;
+				while (nNewTriangles > 0)
+				{
+					// Take triangle from front of queue
+					triangle test = listTriangles.front();
+					listTriangles.pop_front();
+					nNewTriangles--;
+
+					// Clip it against a plane. We only need to test each 
+					// subsequent plane, against subsequent new triangles
+					// as all triangles after a plane clip are guaranteed
+					// to lie on the inside of the plane. I like how this
+					// comment is almost completely and utterly justified
+					switch (p)
+					{
+					case 0:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 1:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 2:	nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					case 3:	nTrisToAdd = Triangle_ClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+					}
+
+					// Clipping may yield a variable number of triangles, so
+					// add these new ones to the back of the queue for subsequent
+					// clipping against next planes
+					for (int w = 0; w < nTrisToAdd; w++)
+						listTriangles.push_back(clipped[w]);
+				}
+				nNewTriangles = listTriangles.size();
+			}
+			// Draw the triangles
+			for (auto& t : listTriangles)
+			{
+				// Rasterize Triangle
+				FillTriangle(
+					t.p[0].x, t.p[0].y,
+					t.p[1].x, t.p[1].y,
+					t.p[2].x, t.p[2].y,
+					t.sym, t.col);
+
+				// Wireframe Triangle (Outline for debugging)
+				/* DrawTriangle(
+					t.p[0].x, t.p[0].y,
+					t.p[1].x, t.p[1].y,
+					t.p[2].x, t.p[2].y,
+					PIXEL_SOLID, FG_BLACK); */
+			}
 		}
 
 		return true;
