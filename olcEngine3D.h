@@ -17,6 +17,9 @@ private:
 	float fYaw;		// FPS Camera rotation in XZ plane
 	float fTheta;	// Spins World Transform
 
+	// Plane motion
+	float moveUpDown = 0.0001f;
+	bool isGoingUp = true;
 
 	// Takes luminance value between 0 & 1 and returns the symbol and console color combinations
 	CHAR_INFO GetColour(float lum)
@@ -62,7 +65,7 @@ public:
 	bool OnUserCreate() override
 	{
 		// Populate mesh with vertecies data from object file
-		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/mountains.obj");
+		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/low_plane.obj");
 		if (!isObjectLoaded) {
 			std::cout << "Couldn't load object";
 			return 0; // Terminate program
@@ -110,21 +113,45 @@ public:
 
 
 
+
+		// To give impression that something is rotating, define angle value that changes over time
+		fTheta += 1.0f * fElapsedTime;	// Uncomment to spin round and round
+
+		/*
 		// Set up "World Transform" though not updating theta makes this a bit redundant
 		// Matrices to perform rotation transform around the axes
 		mat4x4 matRotZ, matRotX;
-		// To give impression that something is rotating, define angle value that changes over time
-		//fTheta += 1.0f * fElapsedTime;	// Uncomment to spin round and round
-
 		matRotZ = Matrix_MakeRotationZ(fTheta * 0.5f);	// Rotation Z
 		matRotX = Matrix_MakeRotationX(fTheta);			// Rotation X
 
-		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 5.0f);	// Change z-value to draw the object near or far
+		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 2.0f);	// Change z-value to draw the object near or far
 
 		mat4x4 matWorld;	// Create Composite Transformation Matrix
 		matWorld = Matrix_MakeIdentity();	// Form world matrix
 		matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);	// Transform by rotation
 		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans); // Transform by translation
+		*/
+
+
+		// Plane motion up and down with rotation about Y
+		if (isGoingUp)
+			moveUpDown += 0.002f;
+		else
+			moveUpDown -= 0.002f;
+		if (moveUpDown > 0.5f) {
+			isGoingUp = false;
+		}
+		else if (moveUpDown < -0.3f) {
+			isGoingUp = true;
+		}
+		mat4x4 matRotY = Matrix_MakeRotationY(fTheta);
+		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, moveUpDown, 1.5f); // Change z-value to draw the object near or far
+		// World matrix
+		mat4x4 matWorld;
+		matWorld = Matrix_MakeIdentity();	// Form world matrix
+		matWorld = Matrix_MultiplyMatrix(matWorld, matRotY);	// Transform by rotation
+		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);	// Transform by translation
+		
 
 		// Create "Point At" Matrix for camera
 		vec3d vUp = { 0, 1, 0 };
