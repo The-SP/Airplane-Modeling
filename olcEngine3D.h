@@ -65,7 +65,7 @@ public:
 	bool OnUserCreate() override
 	{
 		// Populate mesh with vertecies data from object file
-		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/low_plane.obj");
+		bool isObjectLoaded = meshCube.LoadFromObjectFile("resources/airbus.obj");
 		if (!isObjectLoaded) {
 			std::cout << "Couldn't load object";
 			return 0; // Terminate program
@@ -81,22 +81,22 @@ public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
 		if (GetKey(VK_UP).bHeld)
-			vCamera.y += 8.0f * fElapsedTime;	// Travel Upwards
+			vCamera.y += 1.0f * fElapsedTime;	// Travel Upwards
 
 		if (GetKey(VK_DOWN).bHeld)
-			vCamera.y -= 8.0f * fElapsedTime;	// Travel Downwards
+			vCamera.y -= 1.0f * fElapsedTime;	// Travel Downwards
 
 
 		// Dont use these two in FPS mode, it is confusing :P
 		if (GetKey(VK_LEFT).bHeld)
-			vCamera.x -= 8.0f * fElapsedTime;	// Travel Along X-Axis
+			vCamera.x -= 1.0f * fElapsedTime;	// Travel Along X-Axis
 
 		if (GetKey(VK_RIGHT).bHeld)
-			vCamera.x += 8.0f * fElapsedTime;	// Travel Along X-Axis
+			vCamera.x += 1.0f * fElapsedTime;	// Travel Along X-Axis
 		///////
 
 
-		vec3d vForward = Vector_Mul(vLookDir, 8.0f * fElapsedTime);
+		vec3d vForward = Vector_Mul(vLookDir, 1.0f * fElapsedTime);
 
 		// Standard FPS Control scheme, but turn instead of strafe
 		if (GetKey(L'W').bHeld)
@@ -106,10 +106,10 @@ public:
 			vCamera = Vector_Sub(vCamera, vForward);
 
 		if (GetKey(L'A').bHeld)
-			fYaw -= 2.0f * fElapsedTime;
+			fYaw -= 1.0f * fElapsedTime;
 
 		if (GetKey(L'D').bHeld)
-			fYaw += 2.0f * fElapsedTime;
+			fYaw += 1.0f * fElapsedTime;
 
 
 
@@ -135,17 +135,17 @@ public:
 
 		// Plane motion up and down with rotation about Y
 		if (isGoingUp)
-			moveUpDown += 0.002f;
+			moveUpDown += 0.02f;
 		else
-			moveUpDown -= 0.002f;
-		if (moveUpDown > 0.5f) {
+			moveUpDown -= 0.02f;
+		if (moveUpDown > 0.6f) {
 			isGoingUp = false;
 		}
-		else if (moveUpDown < -0.3f) {
+		else if (moveUpDown < -0.6f) {
 			isGoingUp = true;
 		}
-		mat4x4 matRotY = Matrix_MakeRotationY(fTheta);
-		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, moveUpDown, 1.5f); // Change z-value to draw the object near or far
+		mat4x4 matRotY = Matrix_MakeRotationY(fTheta*0.5f);
+		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, moveUpDown, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
 		mat4x4 matWorld;
 		matWorld = Matrix_MakeIdentity();	// Form world matrix
@@ -279,7 +279,7 @@ public:
 			});
 
 		// Clear the screen
-		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
+		Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLUE);
 
 		// Loop through all transformed, viewed, projected, and sorted triangles
 		for (auto& triToRaster : vecTrianglesToRaster)

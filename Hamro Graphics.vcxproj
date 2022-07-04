@@ -131,6 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Matrix.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="olcConsoleGameEngine.h" />
     <ClInclude Include="olcEngine3D.h" />
   </ItemGroup>
