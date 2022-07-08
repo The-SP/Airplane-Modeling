@@ -61,10 +61,10 @@ enum PIXEL_TYPE
 };
 
 
-class olcConsoleGameEngine
+class ourConsoleGraphicsEngine
 {
 public:
-	olcConsoleGameEngine()
+	ourConsoleGraphicsEngine()
 	{
 		m_nScreenWidth = 80;
 		m_nScreenHeight = 30;
@@ -453,7 +453,7 @@ public:
 		}
 	}
 
-	~olcConsoleGameEngine()
+	~ourConsoleGraphicsEngine()
 	{
 		SetConsoleActiveScreenBuffer(m_hOriginalConsole);
 		delete[] m_bufScreen;
@@ -464,7 +464,7 @@ public:
 	{
 		// Start the thread
 		m_bAtomActive = true;
-		std::thread t = std::thread(&olcConsoleGameEngine::GameThread, this);
+		std::thread t = std::thread(&ourConsoleGraphicsEngine::GameThread, this);
 
 		// Wait for thread to be exited
 		t.join();
@@ -714,6 +714,6 @@ protected:
 };
 
 // Define our static variables
-std::atomic<bool> olcConsoleGameEngine::m_bAtomActive(false);
-std::condition_variable olcConsoleGameEngine::m_cvGameFinished;
-std::mutex olcConsoleGameEngine::m_muxGame;
+std::atomic<bool> ourConsoleGraphicsEngine::m_bAtomActive(false);
+std::condition_variable ourConsoleGraphicsEngine::m_cvGameFinished;
+std::mutex ourConsoleGraphicsEngine::m_muxGame;

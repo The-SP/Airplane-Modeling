@@ -1,12 +1,12 @@
 #pragma once
 
-#include "olcConsoleGameEngine.h"
+#include "ourConsoleGraphicsEngine.h"
 #include "Matrix.h"
 
 #include<algorithm>
 
 
-class olcEngine3D : public olcConsoleGameEngine, private Matrix
+class ourGraphicsEngine3D : public ourConsoleGraphicsEngine, private Matrix
 {
 private:
 	mesh meshCube, meshCube2;
@@ -57,7 +57,7 @@ private:
 
 
 public:
-	olcEngine3D()
+	ourGraphicsEngine3D()
 	{
 		m_sAppName = L"3D Demo"; // Name of application
 	}

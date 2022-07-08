@@ -1,8 +1,8 @@
-#include "olcEngine3D.h"
+#include "headers/ourGraphicsEngine3D.h"
 
 int main() {
 	// Create object instance
-	olcEngine3D demo;
+	ourGraphicsEngine3D demo;
 
 	// Create instance of console of (800 character wide, 450 character height, each pixel of 1x1)
 	if (demo.ConstructConsole(800, 450, 1, 1))
