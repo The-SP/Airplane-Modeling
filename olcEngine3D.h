@@ -497,7 +497,7 @@ public:
 		mat4x4 matRotY;
 		// Rotate airplane when key 'R' is held
 		if (GetKey(L'R').bHeld)
-			matRotY = Matrix_MakeRotationY(fTheta * 0.3f);
+			matRotY = Matrix_MakeRotationY(fTheta * 0.5f);
 		else
 			// Default constant rotation for static plane
 			matRotY = Matrix_MakeRotationY(1.8f);
@@ -530,17 +530,12 @@ public:
 			normal = Vector_Normalise(normal);
 
 			// Get Ray from triangle to camera
-			vec3d vCameraRay = Vector_Sub(triTransformed.p[0], vCamera);
+			vec3d vCamera2;	// Constant camera for airplane flying in mountains so that, its lighting doesn't change
+			vec3d vCameraRay = Vector_Sub(triTransformed.p[0], vCamera2);
 
 			// If ray is aligned with normal, then triangle is visible
 			if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
 			{
-				/*
-				* Dot product is used to determine the similarity of two vector
-				* Dot product between line from camera to the triangle (to one of its point) and the normal
-				* i.e Vecotr_DotProduct(normal, vCameraRay)
-				*/
-
 				// Illumination
 				// This is the simplest form of lighting. It's a single direction light (this doesn't exist in real world)
 				// This light assumes that all rays of light are coming in from a single direction not a single point
