@@ -130,10 +130,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="headers\colors.h" />
     <ClInclude Include="headers\Matrix.h" />
     <ClInclude Include="headers\Mesh.h" />
-    <ClInclude Include="ourConsoleGraphicsEngine.h" />
-    <ClInclude Include="ourGraphicsEngine3D.h" />
+    <ClInclude Include="headers\ourConsoleGraphicsEngine.h" />
+    <ClInclude Include="headers\ourGraphicsEngine3D.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
