@@ -135,27 +135,6 @@ public:
 				Draw(x, y, c, col);
 	}
 
-	void DrawString(int x, int y, std::wstring c, short col = 0x000F)
-	{
-		for (size_t i = 0; i < c.size(); i++)
-		{
-			m_bufScreen[y * m_nScreenWidth + x + i].Char.UnicodeChar = c[i];
-			m_bufScreen[y * m_nScreenWidth + x + i].Attributes = col;
-		}
-	}
-
-	void DrawStringAlpha(int x, int y, std::wstring c, short col = 0x000F)
-	{
-		for (size_t i = 0; i < c.size(); i++)
-		{
-			if (c[i] != L' ')
-			{
-				m_bufScreen[y * m_nScreenWidth + x + i].Char.UnicodeChar = c[i];
-				m_bufScreen[y * m_nScreenWidth + x + i].Attributes = col;
-			}
-		}
-	}
-
 	void Clip(int& x, int& y)
 	{
 		if (x < 0) x = 0;
@@ -367,46 +346,6 @@ public:
 			t2x += t2xp;
 			y += 1;
 			if (y > y3) return;
-		}
-	}
-
-	void DrawWireFrameModel(const std::vector<std::pair<float, float>>& vecModelCoordinates, float x, float y, float r = 0.0f, float s = 1.0f, short col = FG_WHITE, short c = PIXEL_SOLID)
-	{
-		// pair.first = x coordinate
-		// pair.second = y coordinate
-
-		// Create translated model vector of coordinate pairs
-		std::vector<std::pair<float, float>> vecTransformedCoordinates;
-		int verts = vecModelCoordinates.size();
-		vecTransformedCoordinates.resize(verts);
-
-		// Rotate
-		for (int i = 0; i < verts; i++)
-		{
-			vecTransformedCoordinates[i].first = vecModelCoordinates[i].first * cosf(r) - vecModelCoordinates[i].second * sinf(r);
-			vecTransformedCoordinates[i].second = vecModelCoordinates[i].first * sinf(r) + vecModelCoordinates[i].second * cosf(r);
-		}
-
-		// Scale
-		for (int i = 0; i < verts; i++)
-		{
-			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first * s;
-			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second * s;
-		}
-
-		// Translate
-		for (int i = 0; i < verts; i++)
-		{
-			vecTransformedCoordinates[i].first = vecTransformedCoordinates[i].first + x;
-			vecTransformedCoordinates[i].second = vecTransformedCoordinates[i].second + y;
-		}
-
-		// Draw Closed Polygon
-		for (int i = 0; i < verts + 1; i++)
-		{
-			int j = (i + 1);
-			DrawLine((int)vecTransformedCoordinates[i % verts].first, (int)vecTransformedCoordinates[i % verts].second,
-				(int)vecTransformedCoordinates[j % verts].first, (int)vecTransformedCoordinates[j % verts].second, c, col);
 		}
 	}
 

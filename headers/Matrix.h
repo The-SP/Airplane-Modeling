@@ -25,7 +25,7 @@ protected:
 		return matrix;
 	}
 
-	mat4x4 Matrix_MakeRotationX(float fAngleRad)
+	mat4x4 Matrix_RotationX(float fAngleRad)
 	{
 		mat4x4 matrix;
 		matrix.m[0][0] = 1.0f;
@@ -37,7 +37,7 @@ protected:
 		return matrix;
 	}
 
-	mat4x4 Matrix_MakeRotationY(float fAngleRad)
+	mat4x4 Matrix_RotationY(float fAngleRad)
 	{
 		mat4x4 matrix;
 		matrix.m[0][0] = cosf(fAngleRad);
@@ -49,7 +49,7 @@ protected:
 		return matrix;
 	}
 
-	mat4x4 Matrix_MakeRotationZ(float fAngleRad)
+	mat4x4 Matrix_RotationZ(float fAngleRad)
 	{
 		mat4x4 matrix;
 		matrix.m[0][0] = cosf(fAngleRad);

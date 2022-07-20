@@ -59,7 +59,7 @@ private:
 public:
 	ourGraphicsEngine3D()
 	{
-		m_sAppName = L"3D Demo"; // Name of application
+		m_sAppName = L"3D Airplane"; // Name of application
 	}
 
 	bool OnUserCreate() override
@@ -152,7 +152,7 @@ public:
 
 	void renderAirplane()
 	{
-		mat4x4 matRotY = Matrix_MakeRotationY(fTheta * 0.5f);
+		mat4x4 matRotY = Matrix_RotationY(fTheta * 0.5f);
 		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
 		mat4x4 matWorld;
@@ -164,7 +164,7 @@ public:
 		// Create "Point At" Matrix for camera
 		vec3d vUp = { 0, 1, 0 };
 		vec3d vTarget = { 0, 0, 1 };
-		mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+		mat4x4 matCameraRot = Matrix_RotationY(fYaw);
 		vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
 		vTarget = Vector_Add(vCamera, vLookDir);
 		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
@@ -344,11 +344,13 @@ public:
 					t.sym, t.col);
 
 				// Wireframe Triangle (Outline for debugging)
-				/* DrawTriangle(
-					t.p[0].x, t.p[0].y,
-					t.p[1].x, t.p[1].y,
-					t.p[2].x, t.p[2].y,
-					PIXEL_SOLID, FG_BLACK); */
+				if (GetKey(L'1').bHeld) {
+					DrawTriangle(
+						t.p[0].x, t.p[0].y,
+						t.p[1].x, t.p[1].y,
+						t.p[2].x, t.p[2].y,
+						PIXEL_SOLID, FG_BLACK);
+				}
 			}
 		}
 	}
@@ -367,7 +369,7 @@ public:
 		// Create "Point At" Matrix for camera
 		vec3d vUp = { 0, 1, 0 };
 		vec3d vTarget = { 0, 0, 1 };
-		mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+		mat4x4 matCameraRot = Matrix_RotationY(fYaw);
 		vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
 		vTarget = Vector_Add(vCamera, vLookDir);
 		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
@@ -497,10 +499,10 @@ public:
 		mat4x4 matRotY;
 		// Rotate airplane when key 'R' is held
 		if (GetKey(L'R').bHeld)
-			matRotY = Matrix_MakeRotationY(fTheta * 0.5f);
+			matRotY = Matrix_RotationY(fTheta * 0.5f);
 		else
 			// Default constant rotation for static plane
-			matRotY = Matrix_MakeRotationY(1.8f);
+			matRotY = Matrix_RotationY(1.8f);
 		matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
 		matWorld = Matrix_MakeIdentity();
@@ -652,25 +654,27 @@ public:
 					t.sym, t.col);
 
 				// Wireframe Triangle (Outline for debugging)
-				/* DrawTriangle(
-					t.p[0].x, t.p[0].y,
-					t.p[1].x, t.p[1].y,
-					t.p[2].x, t.p[2].y,
-					PIXEL_SOLID, FG_BLACK); */
+				if (GetKey(L'1').bHeld) {
+					DrawTriangle(
+						t.p[0].x, t.p[0].y,
+						t.p[1].x, t.p[1].y,
+						t.p[2].x, t.p[2].y,
+						PIXEL_SOLID, FG_BLACK);
+				}
 			}
 		}
 
 		// DRAW AIRPLANE
 		// ---------------------------------------------------------
 		// Draw the triangles
-		for (auto& triProjected : vecTrianglesToRaster)
+		for (auto& t : vecTrianglesToRaster)
 		{
 			// Rasterize Triangle
 			FillTriangle(
-				triProjected.p[0].x, triProjected.p[0].y,
-				triProjected.p[1].x, triProjected.p[1].y,
-				triProjected.p[2].x, triProjected.p[2].y,
-				triProjected.sym, triProjected.col);
+				t.p[0].x, t.p[0].y,
+				t.p[1].x, t.p[1].y,
+				t.p[2].x, t.p[2].y,
+				t.sym, t.col);
 		}
 	}
 };
