@@ -1,12 +1,13 @@
 #pragma once
 
-#include "ourConsoleGraphicsEngine.h"
+#include "hamroGraphics.h"
 #include "Matrix.h"
+#include "Vector.h"
 
 #include<algorithm>
 
 
-class ourGraphicsEngine3D : public ourConsoleGraphicsEngine, private Matrix
+class hamroEngine3D : public hamroGraphics, private Matrix
 {
 private:
 	mesh meshCube, meshCube2;
@@ -21,43 +22,9 @@ private:
 	int renderMode = 0;
 	enum RENDER_MODE { AIRPLANE, AIRPLANE_MOUNTAINS };
 
-	// Takes luminance value between 0 & 1 and returns the symbol and console color combinations
-	CHAR_INFO GetColour(float lum)
-	{
-		short bg_col, fg_col;
-		wchar_t sym;
-		int pixel_bw = (int)(13.0f * lum);
-		switch (pixel_bw)
-		{
-		case 0: bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID; break;
-
-		case 1: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_QUARTER; break;
-		case 2: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_HALF; break;
-		case 3: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_THREEQUARTERS; break;
-		case 4: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_SOLID; break;
-
-		case 5: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_QUARTER; break;
-		case 6: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_HALF; break;
-		case 7: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_THREEQUARTERS; break;
-		case 8: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_SOLID; break;
-
-		case 9:  bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_QUARTER; break;
-		case 10: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_HALF; break;
-		case 11: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_THREEQUARTERS; break;
-		case 12: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_SOLID; break;
-		default:
-			bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID;
-		}
-
-		CHAR_INFO c;
-		c.Attributes = bg_col | fg_col;
-		c.Char.UnicodeChar = sym;
-		return c;
-	}
-
 
 public:
-	ourGraphicsEngine3D()
+	hamroEngine3D()
 	{
 		m_sAppName = L"3D Airplane"; // Name of application
 	}
@@ -80,7 +47,7 @@ public:
 		}
 
 		// Projection Matrix
-		matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
+		matProj = Matrix_Projection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
 		// Tell game engine everything is fine and continue running
 		return true;
@@ -114,7 +81,7 @@ public:
 		///////
 
 
-		vec3d vForward = Vector_Mul(vLookDir, 1.0f * fElapsedTime);
+		vec3d vForward = Vector_Multiply(vLookDir, 1.0f * fElapsedTime);
 
 		// Standard FPS Control scheme, but turn instead of strafe
 		if (GetKey(L'W').bHeld)
@@ -153,10 +120,10 @@ public:
 	void renderAirplane()
 	{
 		mat4x4 matRotY = Matrix_RotationY(fTheta * 0.5f);
-		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
+		mat4x4 matTrans = Matrix_Translation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
 		mat4x4 matWorld;
-		matWorld = Matrix_MakeIdentity();	// Form world matrix
+		matWorld = Matrix_Identity();	// Form world matrix
 		matWorld = Matrix_MultiplyMatrix(matWorld, matRotY);	// Transform by rotation
 		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);	// Transform by translation
 
@@ -170,7 +137,7 @@ public:
 		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
 
 		// Make view matrix from camera
-		mat4x4 matView = Matrix_QuickInverse(matCamera);
+		mat4x4 matView = Matrix_Inverse(matCamera);
 
 		// Store triangles for rasterizing later
 		std::vector<triangle> vecTrianglesToRaster;
@@ -214,6 +181,7 @@ public:
 				light_direction = Vector_Normalise(light_direction);
 				// Dot product: How "aligned" are light direction and triangle surface normal ?
 				float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
+				//float dp = max(0.00001, abs(Vector_DotProduct(light_direction, normal)-Vector_Length(vCameraRay)));
 
 				// Set colour and symbol value of translated triangle
 				CHAR_INFO c = GetColour(dp);
@@ -247,9 +215,9 @@ public:
 					// Scale into view, we moved the normalising into cartesian space
 					// out of the matrix.vector function from the previous videos, so
 					// do this manually
-					triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
-					triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
-					triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+					triProjected.p[0] = Vector_Divide(triProjected.p[0], triProjected.p[0].w);
+					triProjected.p[1] = Vector_Divide(triProjected.p[1], triProjected.p[1].w);
+					triProjected.p[2] = Vector_Divide(triProjected.p[2], triProjected.p[2].w);
 
 					// X/Y are inverted so put them back
 					triProjected.p[0].x *= -1.0f;
@@ -359,10 +327,10 @@ public:
 	{
 		// MOUNTAINS
 		// ---------------------------------------------------------
-		mat4x4 matTrans = Matrix_MakeTranslation(0.0f, -8.0f, 2.0f); // Change z-value to draw the object near or far
+		mat4x4 matTrans = Matrix_Translation(0.0f, -8.0f, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
 		mat4x4 matWorld;
-		matWorld = Matrix_MakeIdentity();	// Form world matrix
+		matWorld = Matrix_Identity();	// Form world matrix
 		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);	// Transform by translation
 
 
@@ -375,7 +343,7 @@ public:
 		mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
 
 		// Make view matrix from camera
-		mat4x4 matView = Matrix_QuickInverse(matCamera);
+		mat4x4 matView = Matrix_Inverse(matCamera);
 
 		// Store triangles for rasterizing later
 		std::vector<triangle> vecTrianglesToRaster2;
@@ -405,16 +373,8 @@ public:
 			// If ray is aligned with normal, then triangle is visible
 			if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
 			{
-				/*
-				* Dot product is used to determine the similarity of two vector
-				* Dot product between line from camera to the triangle (to one of its point) and the normal
-				* i.e Vecotr_DotProduct(normal, vCameraRay)
-				*/
-
 				// Illumination
-				// This is the simplest form of lighting. It's a single direction light (this doesn't exist in real world)
-				// This light assumes that all rays of light are coming in from a single direction not a single point
-				vec3d light_direction = { 0.0f, 1.0f, -1.0f };	// only z-component to indicate the light is shining towards the player
+				vec3d light_direction = { 0.0f, 1.0f, -1.0f };
 				// Normalize light_direction
 				light_direction = Vector_Normalise(light_direction);
 				// Dot product: How "aligned" are light direction and triangle surface normal ?
@@ -449,12 +409,10 @@ public:
 					triProjected.col = clipped[n].col;
 					triProjected.sym = clipped[n].sym;
 
-					// Scale into view, we moved the normalising into cartesian space
-					// out of the matrix.vector function from the previous videos, so
-					// do this manually
-					triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
-					triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
-					triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+					// Scale into view, normalise manually
+					triProjected.p[0] = Vector_Divide(triProjected.p[0], triProjected.p[0].w);
+					triProjected.p[1] = Vector_Divide(triProjected.p[1], triProjected.p[1].w);
+					triProjected.p[2] = Vector_Divide(triProjected.p[2], triProjected.p[2].w);
 
 					// X/Y are inverted so put them back
 					triProjected.p[0].x *= -1.0f;
@@ -503,9 +461,9 @@ public:
 		else
 			// Default constant rotation for static plane
 			matRotY = Matrix_RotationY(1.8f);
-		matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
+		matTrans = Matrix_Translation(0.0f, 0.0f, 2.0f); // Change z-value to draw the object near or far
 		// World matrix
-		matWorld = Matrix_MakeIdentity();
+		matWorld = Matrix_Identity();
 		matWorld.m[1][1] = -1;	// Invert image (inverted by defualt)
 		matWorld = Matrix_MultiplyMatrix(matWorld, matRotY);
 		matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);	// Transform by translation
@@ -539,9 +497,7 @@ public:
 			if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
 			{
 				// Illumination
-				// This is the simplest form of lighting. It's a single direction light (this doesn't exist in real world)
-				// This light assumes that all rays of light are coming in from a single direction not a single point
-				vec3d light_direction = { 0.0f, 1.0f, -1.0f };	// only z-component to indicate the light is shining towards the player
+				vec3d light_direction = { 0.0f, 1.0f, -1.0f };
 				// Normalize light_direction
 				light_direction = Vector_Normalise(light_direction);
 				// Dot product: How "aligned" are light direction and triangle surface normal ?
@@ -561,9 +517,9 @@ public:
 				triProjected.col = triTransformed.col;
 				triProjected.sym = triTransformed.sym;
 				// Normalize the coordinates
-				triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
-				triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
-				triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+				triProjected.p[0] = Vector_Divide(triProjected.p[0], triProjected.p[0].w);
+				triProjected.p[1] = Vector_Divide(triProjected.p[1], triProjected.p[1].w);
+				triProjected.p[2] = Vector_Divide(triProjected.p[2], triProjected.p[2].w);
 
 
 				// Scale into view: Offset vertices into visible normalised space

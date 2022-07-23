@@ -18,10 +18,10 @@ Character Set -> Use Unicode.
 #include "colors.h"
 
 
-class ourConsoleGraphicsEngine
+class hamroGraphics
 {
 public:
-	ourConsoleGraphicsEngine()
+	hamroGraphics()
 	{
 		m_nScreenWidth = 80;
 		m_nScreenHeight = 30;
@@ -45,7 +45,7 @@ public:
 		m_bEnableSound = true;
 	}
 
-	int ConstructConsole(int width, int height, int fontw, int fonth)
+	int CreateConsoleWindow(int width, int height, int fontw, int fonth)
 	{
 		if (m_hConsole == INVALID_HANDLE_VALUE)
 			return Error(L"Bad Handle");
@@ -76,16 +76,6 @@ public:
 		cfi.FontFamily = FF_DONTCARE;
 		cfi.FontWeight = FW_NORMAL;
 
-		/*	DWORD version = GetVersion();
-			DWORD major = (DWORD)(LOBYTE(LOWORD(version)));
-			DWORD minor = (DWORD)(HIBYTE(LOWORD(version)));*/
-
-			//if ((major > 6) || ((major == 6) && (minor >= 2) && (minor < 4)))		
-			//	wcscpy_s(cfi.FaceName, L"Raster"); // Windows 8 :(
-			//else
-			//	wcscpy_s(cfi.FaceName, L"Lucida Console"); // Everything else :P
-
-			//wcscpy_s(cfi.FaceName, L"Liberation Mono");
 		wcscpy_s(cfi.FaceName, L"Consolas");
 		if (!SetCurrentConsoleFontEx(m_hConsole, false, &cfi))
 			return Error(L"SetCurrentConsoleFontEx");
@@ -349,7 +339,7 @@ public:
 		}
 	}
 
-	~ourConsoleGraphicsEngine()
+	~hamroGraphics()
 	{
 		SetConsoleActiveScreenBuffer(m_hOriginalConsole);
 		delete[] m_bufScreen;
@@ -360,7 +350,7 @@ public:
 	{
 		// Start the thread
 		m_bAtomActive = true;
-		std::thread t = std::thread(&ourConsoleGraphicsEngine::GameThread, this);
+		std::thread t = std::thread(&hamroGraphics::GameThread, this);
 
 		// Wait for thread to be exited
 		t.join();
@@ -608,6 +598,6 @@ protected:
 };
 
 // Define our static variables
-std::atomic<bool> ourConsoleGraphicsEngine::m_bAtomActive(false);
-std::condition_variable ourConsoleGraphicsEngine::m_cvGameFinished;
-std::mutex ourConsoleGraphicsEngine::m_muxGame;
+std::atomic<bool> hamroGraphics::m_bAtomActive(false);
+std::condition_variable hamroGraphics::m_cvGameFinished;
+std::mutex hamroGraphics::m_muxGame;

@@ -8,5 +8,6 @@ A Computer Graphics project for B.E.(Computer) 5th Semester.
 - **W, S** - move Forward, Backward
 - **A, D** - rotate Camera Left, Right
 - **Up, Down, Left, Right** - move Up, Down, Left, Right
-- **M** - Switch models to be rendered
 - **R** - Rotate Airplane
+- **M** - Switch models to be rendered
+- **1** - Toggle Wireframe mode

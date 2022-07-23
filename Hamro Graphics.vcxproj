@@ -133,8 +133,9 @@
     <ClInclude Include="headers\colors.h" />
     <ClInclude Include="headers\Matrix.h" />
     <ClInclude Include="headers\Mesh.h" />
-    <ClInclude Include="headers\ourConsoleGraphicsEngine.h" />
-    <ClInclude Include="headers\ourGraphicsEngine3D.h" />
+    <ClInclude Include="headers\hamroGraphics.h" />
+    <ClInclude Include="headers\hamroEngine.h" />
+    <ClInclude Include="headers\Vector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
