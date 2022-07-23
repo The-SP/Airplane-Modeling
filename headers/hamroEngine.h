@@ -180,7 +180,9 @@ public:
 				// Normalize light_direction
 				light_direction = Vector_Normalise(light_direction);
 				// Dot product: How "aligned" are light direction and triangle surface normal ?
-				float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
+				//float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
+				float dp = ambient(light_direction, normal);
+				//float dp = specular(light_direction, normal, vCameraRay);
 				//float dp = max(0.00001, abs(Vector_DotProduct(light_direction, normal)-Vector_Length(vCameraRay)));
 
 				// Set colour and symbol value of translated triangle

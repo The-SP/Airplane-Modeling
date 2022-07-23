@@ -2,11 +2,12 @@
 
 #include"Mesh.h"
 #include"Vector.h"
+#define MAX(a,b) ((a) > (b)? (a) : (b))
 
 class Matrix : protected Vector
 {
 protected:
-
+	
 	vec3d Matrix_MultiplyVector(mat4x4& m, vec3d& i)
 	{
 		vec3d v;
@@ -133,5 +134,13 @@ protected:
 		matrix.m[3][2] = -(m.m[3][0] * matrix.m[0][2] + m.m[3][1] * matrix.m[1][2] + m.m[3][2] * matrix.m[2][2]);
 		matrix.m[3][3] = 1.0f;
 		return matrix;
+	}
+
+	float ambient(vec3d light_dir, vec3d normal) {
+		return MAX(0.1f, Vector_DotProduct(light_dir, normal));
+	}
+
+	float specular(vec3d light_dir, vec3d normal, vec3d camera_ray) {
+		return (MAX(0.00001f, Vector_DotProduct(light_dir, normal)) - Vector_Length(camera_ray));
 	}
 };
