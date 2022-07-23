@@ -141,6 +141,6 @@ protected:
 	}
 
 	float specular(vec3d light_dir, vec3d normal, vec3d camera_ray) {
-		return (MAX(0.00001f, Vector_DotProduct(light_dir, normal)) - Vector_Length(camera_ray));
+		return MAX(0.00001f, abs(Vector_DotProduct(light_dir, normal) - Vector_Length(camera_ray)));
 	}
 };

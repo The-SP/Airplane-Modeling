@@ -37,7 +37,7 @@ public:
 
 		m_bEnableSound = false;
 
-		m_sAppName = L"Default";
+		m_appName = L"Default";
 	}
 
 	void EnableSound()
@@ -133,65 +133,50 @@ public:
 		if (y >= m_nScreenHeight) y = m_nScreenHeight;
 	}
 
+	// BRESENHAM LINE DRAWING ALGORITHM
 	void DrawLine(int x1, int y1, int x2, int y2, short c = 0x2588, short col = 0x000F)
 	{
-		int x, y, dx, dy, dx1, dy1, px, py, xe, ye, i;
-		dx = x2 - x1; dy = y2 - y1;
-		dx1 = abs(dx); dy1 = abs(dy);
-		px = 2 * dy1 - dx1;	py = 2 * dx1 - dy1;
-		if (dy1 <= dx1)
+		int x, y, dx, dy, xinc, yinc, p, i;
+		x = x1; y = y1;
+		dx = abs(x2 - x1); dy = abs(y2 - y1);
+		xinc = (x2 > x1) ? 1 : - 1;
+		yinc = (y2 > y1) ? 1 : - 1;
+		if (dx >= dy)
 		{
-			if (dx >= 0)
-			{
-				x = x1; y = y1; xe = x2;
-			}
-			else
-			{
-				x = x2; y = y2; xe = x1;
-			}
-
 			Draw(x, y, c, col);
-
-			for (i = 0; x < xe; i++)
+			p = 2 * dy - dx;
+			for (i = 0; i < dx; i++)
 			{
-				x = x + 1;
-				if (px < 0)
-					px = px + 2 * dy1;
+				x = x + xinc;
+				if (p < 0)
+					p = p + 2 * dy;
 				else
 				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) y = y + 1; else y = y - 1;
-					px = px + 2 * (dy1 - dx1);
+					p = p + 2 * dy - 2 * dx;
+					y = y + yinc;
 				}
 				Draw(x, y, c, col);
 			}
 		}
-		else
+		else 
 		{
-			if (dy >= 0)
-			{
-				x = x1; y = y1; ye = y2;
-			}
-			else
-			{
-				x = x2; y = y2; ye = y1;
-			}
-
 			Draw(x, y, c, col);
-
-			for (i = 0; y < ye; i++)
+			p = 2 * dx - dy;
+			for (i = 0; i < dy; i++)
 			{
-				y = y + 1;
-				if (py <= 0)
-					py = py + 2 * dx1;
+				y = y + yinc;
+				if (p < 0)
+					p = p + 2 * dx;
 				else
 				{
-					if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) x = x + 1; else x = x - 1;
-					py = py + 2 * (dx1 - dy1);
+					p = p + 2 * dx - 2 * dy;
+					x = x + xinc;
 				}
 				Draw(x, y, c, col);
 			}
 		}
 	}
+
 
 	// Draws three lines between three co-ordinates
 	void DrawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, short c = 0x2588, short col = 0x000F)
@@ -492,7 +477,7 @@ private:
 
 				// Update Title & Present Screen Buffer
 				wchar_t s[256];
-				swprintf_s(s, 256, L"Graphics - Console Model Rendering - %s - FPS: %3.2f", m_sAppName.c_str(), 1.0f / fElapsedTime);
+				swprintf_s(s, 256, L"Graphics - Console Model Rendering - %s - FPS: %3.2f", m_appName.c_str(), 1.0f / fElapsedTime);
 				SetConsoleTitle(s);
 				WriteConsoleOutput(m_hConsole, m_bufScreen, { (short)m_nScreenWidth, (short)m_nScreenHeight }, { 0,0 }, &m_rectWindow);
 			}
@@ -577,7 +562,7 @@ protected:
 	int m_nScreenWidth;
 	int m_nScreenHeight;
 	CHAR_INFO* m_bufScreen;
-	std::wstring m_sAppName;
+	std::wstring m_appName;
 	HANDLE m_hOriginalConsole;
 	CONSOLE_SCREEN_BUFFER_INFO m_OriginalConsoleInfo;
 	HANDLE m_hConsole;

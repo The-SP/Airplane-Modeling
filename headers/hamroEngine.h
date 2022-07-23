@@ -26,7 +26,7 @@ private:
 public:
 	hamroEngine3D()
 	{
-		m_sAppName = L"3D Airplane"; // Name of application
+		m_appName = L"3D Airplane"; // Name of application
 	}
 
 	bool OnUserCreate() override
